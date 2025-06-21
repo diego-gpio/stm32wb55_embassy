@@ -30,12 +30,22 @@ fn main() -> ! {
     // Setup a delay, based on the Cortex-m systick.
     let mut delay = Delay::new(cp.SYST, clock_cfg.systick());
     // Port::C, 13 because the LED is described as PC13 on WeAct blackpill page
-    let mut led = Pin::new(Port::C, 13, PinMode::Output);
+    let mut led1 = Pin::new(Port::B, 5, PinMode::Output);
+    let mut led2 = Pin::new(Port::B, 0, PinMode::Output);
+    let mut led3 = Pin::new(Port::B, 1, PinMode::Output);
 
     loop {
-        led.set_low();
+        led1.set_low();
         delay.delay_ms(1_000);
-        led.set_high();
+        led1.set_high();
+        delay.delay_ms(1_000);
+        led2.set_low();
+        delay.delay_ms(1_000);
+        led2.set_high();
+        delay.delay_ms(1_000);
+        led3.set_low();
+        delay.delay_ms(1_000);
+        led3.set_high();
         delay.delay_ms(1_000);
     }
 }
