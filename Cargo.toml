@@ -4,16 +4,47 @@ name = "stm32wb55_test"
 edition = "2024"
 version = "0.1.0"
 
-[dependencies]
-defmt = "0.3.0"
-defmt-rtt = "0.4.0"
-panic-probe = { version = "0.3.0", features = ["print-defmt"] }
-cortex-m = { version = "0.7.7", features = ["critical-section-single-core"] }
-cortex-m-rt = "0.7.5"
-panic-halt = "1.0.0"
 
-# Change this import as required for your MCU.
-hal = { package = "stm32-hal2", version = "1.9.3", features = ["wb55", "wbrt"] }
+[dependencies]
+embassy-stm32 = { version = "0.2.0", features = [
+    "defmt",
+    "stm32wb55rg",
+    "time-driver-any",
+    "time",
+    "exti",
+    # "low-power", Feature not working on embassy-stm32 0.2.0 but fix on progress
+] }
+embassy-sync = { version = "0.7.0", features = ["defmt"] }
+embassy-executor = { version = "0.7.0", features = [
+    "arch-cortex-m",
+    "executor-thread",
+    "defmt",
+] }
+embassy-time = { version = "0.4.0", features = [
+    "defmt",
+    "defmt-timestamp-uptime",
+    "tick-hz-32_768",
+] }
+embassy-net = { version = "0.7.0", features = [
+    "defmt",
+    "udp",
+    "proto-ipv6",
+    "medium-ieee802154",
+], optional = true }
+
+defmt = "1.0.1"
+defmt-rtt = "1.0.0"
+
+cortex-m = { version = "0.7.6", features = [
+    "inline-asm",
+    "critical-section-single-core",
+] }
+cortex-m-rt = "0.7.0"
+embedded-hal = "1.0.0"
+panic-probe = { version = "1.0.0", features = ["print-defmt"] }
+heapless = { version = "0.8", default-features = false }
+static_cell = "2"
+embassy-futures = { version = "0.1.1", features = ["defmt"] }
 
 
 # cargo build/run

@@ -1,6 +1,13 @@
 [target.'cfg(all(target_arch = "arm", target_os = "none"))']
 # Change this runner as required for your MCU.
-runner = "probe-rs run --chip STM32WB55RG"                          # to list chips, run `probe-rs chip list.`
+runner = [
+    "probe-rs",
+    "run",
+    "--chip",
+    "STM32WB55RG",
+    "--log-format",
+    "{t} {L} {s}",
+] # to list chips, run `probe-rs chip list.`
 rustflags = ["-C", "link-arg=-Tlink.x", "-C", "link-arg=-Tdefmt.x"]
 
 [build]
