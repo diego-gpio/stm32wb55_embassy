@@ -1,12 +1,16 @@
 #![no_std]
 #![no_main]
 
+use cortex_m as _;
 use cortex_m::delay::Delay;
 use cortex_m_rt::entry; // The runtime
+
+use defmt::{info, warn};
+use defmt_rtt as _;
 use hal::{
     self,
     clocks::Clocks,
-    gpio::{Pin, PinMode, Port},
+    gpio::{Pin, PinMode, Port, Pull},
     pac,
 };
 use panic_halt as _;
@@ -16,9 +20,11 @@ use panic_halt as _;
 #[entry]
 fn main() -> ! {
     // Set up CPU peripherals
+    info!("Starting...");
     let cp = cortex_m::Peripherals::take().unwrap();
     // Set up microcontroller peripherals
     let mut _dp = pac::Peripherals::take().unwrap();
+    warn!("I'm here");
 
     let clock_cfg = Clocks::default();
 
@@ -28,25 +34,32 @@ fn main() -> ! {
     clock_cfg.setup().unwrap();
 
     // Setup a delay, based on the Cortex-m systick.
+    info!("Configuring peripherals");
     let mut delay = Delay::new(cp.SYST, clock_cfg.systick());
-    // Port::C, 13 because the LED is described as PC13 on WeAct blackpill page
     let mut led1 = Pin::new(Port::B, 5, PinMode::Output);
     let mut led2 = Pin::new(Port::B, 0, PinMode::Output);
     let mut led3 = Pin::new(Port::B, 1, PinMode::Output);
+    let mut sw1 = Pin::new(Port::C, 4, PinMode::Input);
+    let mut sw2 = Pin::new(Port::D, 0, PinMode::Input);
+    sw1.pull(Pull::Up);
+    sw2.pull(Pull::Up);
+    // let mut sw3 = Pin::new(Port::D, 1, PinMode::Input);
 
     loop {
-        led1.set_low();
-        delay.delay_ms(1_000);
-        led1.set_high();
-        delay.delay_ms(1_000);
-        led2.set_low();
-        delay.delay_ms(1_000);
-        led2.set_high();
-        delay.delay_ms(1_000);
-        led3.set_low();
-        delay.delay_ms(1_000);
-        led3.set_high();
-        delay.delay_ms(1_000);
+        if sw1.is_low() {
+            info!("Turning ON LEDs");
+            led1.set_high();
+            led2.set_high();
+            led3.set_high();
+            delay.delay_ms(1_000);
+        }
+        if sw2.is_low() {
+            info!("Turning OFF LEDs");
+            led1.set_low();
+            led2.set_low();
+            led3.set_low();
+            delay.delay_ms(1_000);
+        }
     }
 }
 

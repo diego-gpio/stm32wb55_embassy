@@ -22,12 +22,11 @@ codegen-units = 1
 debug = 2
 debug-assertions = true # <-
 incremental = false
-opt-level = 3           # <-
+opt-level = 1           # <-
 overflow-checks = true  # <-
 
 # cargo test
 [profile.test]
-codegen-units = 1
 debug = 2
 debug-assertions = true # <-
 incremental = false
@@ -41,7 +40,7 @@ debug = 2
 debug-assertions = false # <-
 incremental = false
 lto = 'fat'
-opt-level = 3            # <-
+opt-level = 'z'          # <-
 overflow-checks = false  # <-
 
 # cargo test --release
