@@ -5,16 +5,11 @@ runner = [
     "run",
     "--chip",
     "STM32WB55RG",
-    "--log-format",
-    "{t} {L} {s}",
 ] # to list chips, run `probe-rs chip list.`
-rustflags = ["-C", "link-arg=-Tlink.x", "-C", "link-arg=-Tdefmt.x"]
+rustflags = ["-C", "no-vectorize-loops"]
 
 [build]
 target = "thumbv7em-none-eabihf"
 
 [env]
-# default = "error", other options: trace , debug, warn or off
-# to set by module: "warn,{crate}::{mod}=trace"
-DEFMT_LOG = "info"
-DEFMT_RTT_BUFFER_SIZE = "1024"
+DEFMT_LOG = "trace,embassy_hal_internal=debug,embassy_net_esp_hosted=debug,smoltcp=info"

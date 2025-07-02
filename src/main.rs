@@ -1,62 +1,64 @@
 #![no_std]
 #![no_main]
-
 use defmt::*;
 use defmt_rtt as _;
 use embassy_executor::Spawner;
-use embassy_futures::join::join;
-use embassy_stm32::{
-    exti::{AnyChannel, Channel, ExtiInput},
-    gpio::{AnyPin, Level, Output, Pin, Pull, Speed},
-};
-use embassy_sync::{blocking_mutex::raw::ThreadModeRawMutex, signal::Signal};
-use embassy_time::{Duration, Timer, WithTimeout};
+use embassy_stm32::gpio::{Level, Output, Speed};
+use embassy_stm32::low_power::{Executor, StopMode, stop_ready, stop_with_rtc};
+use embassy_stm32::rtc::{Rtc, RtcConfig};
+use embassy_time::Timer;
 use panic_probe as _;
+use static_cell::StaticCell;
 
-#[derive(Clone, Copy)]
-enum Button {
-    SW1,
-    SW3,
-}
-
-static SIGNAL: Signal<ThreadModeRawMutex, Button> = Signal::new();
-
-#[embassy_executor::main]
-async fn main(spawner: Spawner) {
-    info!("Starting...");
-    let p = embassy_stm32::init(Default::default());
-    spawner.spawn(led_toggle(p.PB1.degrade())).unwrap();
-    let sw1 = button(p.PC4.degrade(), p.EXTI4.degrade(), "1", Button::SW1);
-    let sw3 = button(p.PD1.degrade(), p.EXTI1.degrade(), "3", Button::SW3);
-    join(sw1, sw3).await;
-}
-
-async fn button(pin: AnyPin, int: AnyChannel, id: &str, b: Button) {
-    let mut button = ExtiInput::new(pin, int, Pull::Up);
-    loop {
-        button.wait_for_falling_edge().await;
-        info!("Button {} pressed!!", id);
-        SIGNAL.signal(b);
-        Timer::after_millis(200).await;
-        button.wait_for_rising_edge().await;
-    }
+#[cortex_m_rt::entry]
+fn main() -> ! {
+    Executor::take().run(|spawner| {
+        unwrap!(spawner.spawn(async_main(spawner)));
+    });
 }
 
 #[embassy_executor::task]
-async fn led_toggle(pin: AnyPin) {
-    const INTERVAL_MS: u64 = 500;
-    let mut delay_ms: u64 = INTERVAL_MS;
-    let mut led = Output::new(pin, Level::Low, Speed::Low);
-    loop {
+async fn async_main(spawner: Spawner) {
+    // initialize the platform...
+    let mut config = embassy_stm32::Config::default();
+    // when enabled the power-consumption is much higher during stop, but debugging and RTT is working
+    config.enable_debug_during_sleep = false;
+    static CONFIG: StaticCell<embassy_stm32::Config> = StaticCell::new();
+    let config = CONFIG.init(config);
+    let p = embassy_stm32::init(*config);
+
+    // give the RTC to the executor...
+    let rtc = Rtc::new(p.RTC, RtcConfig::default());
+    static RTC: StaticCell<Rtc> = StaticCell::new();
+    let rtc = RTC.init(rtc);
+    stop_with_rtc(rtc);
+
+    spawner.spawn(led_toggle(*config)).unwrap();
+    spawner.spawn(task_2()).unwrap();
+}
+
+#[embassy_executor::task]
+async fn led_toggle(config: embassy_stm32::Config) {
+    let p = embassy_stm32::init(config);
+    let mut led = Output::new(p.PB1, Level::Low, Speed::Low);
+    for _ in 0..9 {
+        info!("Toggle LED 10 times");
         led.toggle();
-        let delay: Duration = Duration::from_millis(delay_ms);
-        if let Some(v) = SIGNAL.wait().with_timeout(delay).await.ok() {
-            delay_ms = match v {
-                Button::SW1 if delay_ms > INTERVAL_MS => delay_ms - INTERVAL_MS,
-                Button::SW1 => delay_ms,
-                Button::SW3 => delay_ms + INTERVAL_MS,
-            };
-            info!("Delay = {} ms", delay_ms);
-        }
+        Timer::after_millis(100).await;
     }
+    // disable LED
+    led.set_low();
+    defmt::assert!(stop_ready(StopMode::Stop2));
+}
+
+#[embassy_executor::task]
+async fn task_2() {
+    for _ in 0..5 {
+        info!("task 2: waiting for 1000ms...");
+        defmt::assert!(stop_ready(StopMode::Stop2));
+        Timer::after_millis(1000).await;
+    }
+
+    info!("Test OK");
+    cortex_m::asm::bkpt();
 }
