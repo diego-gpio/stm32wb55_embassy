@@ -6,7 +6,7 @@ runner = [
     "--chip",
     "STM32WB55RG",
 ] # to list chips, run `probe-rs chip list.`
-rustflags = ["-C", "no-vectorize-loops"]
+rustflags = ["-C", "link-arg=-Tlink.x", "-C", "link-arg=-Tdefmt.x"]
 
 [build]
 target = "thumbv7em-none-eabihf"

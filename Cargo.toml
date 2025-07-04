@@ -7,9 +7,10 @@ version = "0.1.0"
 
 [dependencies]
 embassy-stm32 = { git = "https://github.com/embassy-rs/embassy/", version = "^0.2.0", features = [
-    "defmt",
     "stm32wb55rg",
+    "defmt",
     "exti",
+    "chrono",
     "time-driver-any",
     "time",
     "unstable-pac",
@@ -45,3 +46,4 @@ static_cell = "2"
 embassy-futures = { git = "https://github.com/embassy-rs/embassy", version = "0.1.1", features = [
     "defmt",
 ] }
+embedded-hal-async = "1.0.0"
