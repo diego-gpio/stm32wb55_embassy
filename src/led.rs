@@ -11,20 +11,16 @@ use embassy_time::Timer;
 pub async fn toggle_red(pin: Peri<'static, AnyPin>) {
     let mut led = Output::new(pin, Level::Low, Speed::Low);
     let mut delay = Delay;
-    defmt::assert!(stop_ready(StopMode::Stop2));
     Timer::after_millis(500).await;
     loop {
-        info!("Toggle LED 10 times");
+        info!("Toggle RED !!");
         for _ in 1..10 {
             led.toggle();
-            info!("Toggle RED !!");
             delay.delay_ms(100_u32);
         }
         led.set_low();
-        if stop_ready(StopMode::Stop2) {
-            info!("task led waiting for 5000ms...");
-            Timer::after_millis(5000).await;
-        }
+        defmt::assert!(stop_ready(StopMode::Stop2));
+        Timer::after_secs(10).await;
     }
 }
 
@@ -32,18 +28,16 @@ pub async fn toggle_red(pin: Peri<'static, AnyPin>) {
 pub async fn toggle_green(pin: Peri<'static, AnyPin>) {
     let mut led = Output::new(pin, Level::Low, Speed::Low);
     let mut delay = Delay;
-    defmt::assert!(stop_ready(StopMode::Stop2));
+
     Timer::after_millis(2500).await;
     loop {
+        info!("Toggle GREEN !!");
         for _ in 0..10 {
             led.toggle();
-            info!("Toggle BLUE !!");
             delay.delay_ms(100_u32);
         }
         led.set_low();
-        if stop_ready(StopMode::Stop2) {
-            info!("task led blue waiting for 5000ms...");
-            Timer::after_millis(5000).await;
-        }
+        defmt::assert!(stop_ready(StopMode::Stop2));
+        Timer::after_secs(10).await;
     }
 }
